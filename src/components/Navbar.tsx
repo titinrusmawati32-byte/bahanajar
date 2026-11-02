@@ -1,5 +1,5 @@
 import React from 'react';
-import { Box, Sparkles, Globe } from 'lucide-react';
+import { Box, Sparkles, Globe, Sliders } from 'lucide-react';
 import { RoutePath } from '../types';
 import { audioService } from '../utils/audio';
 
@@ -58,6 +58,19 @@ export const Navbar: React.FC<NavbarProps> = ({ currentRoute, onNavigate, onOpen
             className="text-sm font-medium text-slate-300 hover:text-white transition-colors"
           >
             Modul
+          </button>
+
+          <button
+            onClick={() => {
+              audioService.playClick();
+              onNavigate('/admin');
+            }}
+            className={`text-sm font-medium transition-colors flex items-center gap-1.5 ${
+              currentRoute === '/admin' ? 'text-emerald-400 font-semibold' : 'text-slate-300 hover:text-white'
+            }`}
+          >
+            <Sliders className="w-3.5 h-3.5 text-emerald-400" />
+            <span>Admin</span>
           </button>
 
           <button

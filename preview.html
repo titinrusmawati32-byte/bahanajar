@@ -7,14 +7,19 @@
   <meta name="description" content="Media belajar 3D untuk kelas Indonesia didukung TutorFlow.">
   <link rel="icon" type="image/svg+xml" href="./public/favicon.svg" />
   
+  <!-- Tailwind CSS CDN -->
   <script src="https://cdn.tailwindcss.com"></script>
+  <!-- Google Fonts -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
   
+  <!-- Three.js CDN -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+  <!-- React & ReactDOM CDN -->
   <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
   <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+  <!-- Babel Standalone for JSX -->
   <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
 
   <style>
@@ -37,182 +42,344 @@
   <script type="text/babel">
     const { useState, useEffect, useRef } = React;
 
-    const HOTSPOTS_DATA = [
-      { id: 1, name: 'Paru-paru Kanan (Pulmo Dexter)', shortName: 'Paru Kanan', pos: [-1.3, 0.2, 0.3], desc: 'Terdiri dari 3 lobus (superior, medius, inferior) yang menampung volume udara lebih besar.' },
-      { id: 2, name: 'Paru-paru Kiri (Pulmo Sinister)', shortName: 'Paru Kiri', pos: [1.3, 0.1, 0.3], desc: 'Terdiri dari 2 lobus dan memiliki takik jantung (cardiac notch) untuk ruang jantung.' },
-      { id: 3, name: 'Saluran Napas (Trakea & Bronkus)', shortName: 'Saluran Napas', pos: [0, 1.8, 0.2], desc: 'Pipa bertulang rawan yang menghantarkan udara bersih ke cabang bronkiolus.' },
-      { id: 4, name: 'Diafragma', shortName: 'Diafragma', pos: [0, -2.1, 0.3], desc: 'Otot utama pernapasan yang memisahkan rongga dada dan rongga perut.' }
+    // --- Curricula & Constant Data ---
+    const DEFAULT_HOTSPOTS = [
+      { id: 1, name: 'Paru-paru Kanan (Pulmo Dexter)', shortName: 'Paru Kanan', pos: [-1.3, 0.2, 0.3], desc: 'Terdiri dari 3 lobus (superior, medius, inferior) yang menampung volume udara lebih besar.', func: 'Menyerap oksigen dari udara dan mengedarkannya ke pembuluh kapiler.' },
+      { id: 2, name: 'Paru-paru Kiri (Pulmo Sinister)', shortName: 'Paru Kiri', pos: [1.3, 0.1, 0.3], desc: 'Terdiri dari 2 lobus dan memiliki takik jantung (cardiac notch) untuk ruang jantung.', func: 'Memfasilitasi difusi gas antara alveolus dan aliran darah sistemik.' },
+      { id: 3, name: 'Saluran Napas (Trakea & Bronkus)', shortName: 'Saluran Napas', pos: [0, 1.8, 0.2], desc: 'Pipa bertulang rawan yang menghantarkan udara bersih ke cabang bronkiolus.', func: 'Menyalurkan udara hangat, lembap, dan bersih langsung ke paru-paru.' },
+      { id: 4, name: 'Diafragma', shortName: 'Diafragma', pos: [0, -2.1, 0.3], desc: 'Otot utama pernapasan yang memisahkan rongga dada dan rongga perut.', func: 'Berkontraksi ke bawah saat inspirasi untuk memperbesar volume rongga dada.' }
     ];
 
-    const ALL_MODULES = [
-      { id: 'sistem-pernapasan', num: 'MODUL 01', title: 'Sistem Pernapasan', status: 'Tersedia', free: true, desc: 'Mekanisme pertukaran gas, anatomi pulmo, bronkus, dan alveolus.' },
-      { id: 'sistem-peredaran-darah', num: 'MODUL 02', title: 'Sistem Peredaran Darah', status: 'Segera Hadir', free: false, desc: 'Struktur jantung 4 ruang, katup bikuspid/trikuspid, dan sirkulasi darah.' },
-      { id: 'sistem-pencernaan', num: 'MODUL 03', title: 'Sistem Pencernaan', status: 'Segera Hadir', free: false, desc: 'Saluran pencernaan mekanik dan kimiawi lambung hingga usus.' },
-      { id: 'sistem-ekskresi', num: 'MODUL 04', title: 'Sistem Ekskresi', status: 'Segera Hadir', free: false, desc: 'Struktur ginjal, nefron, filtrasi darah, dan pembentukan urine.' },
-      { id: 'sistem-gerak', num: 'MODUL 05', title: 'Sistem Gerak Manusia', status: 'Segera Hadir', free: false, desc: 'Rangka aksial, apendikular, sendi sinovial, dan kontraksi otot.' },
-      { id: 'struktur-sel', num: 'MODUL 06', title: 'Sel Tumbuhan & Hewan', status: 'Segera Hadir', free: false, desc: 'Organel sel: nukleus, mitokondria, kloroplas, dan dinding sel.' }
+    const DEFAULT_MODULES = [
+      { id: 'sistem-pernapasan', num: 'MODUL 01', title: 'Sistem Pernapasan', status: 'Tersedia', free: true, desc: 'Mekanisme pertukaran gas, anatomi pulmo, bronkus, dan alveolus.', specimen: 'Pulmones' },
+      { id: 'sistem-peredaran-darah', num: 'MODUL 02', title: 'Sistem Peredaran Darah', status: 'Segera Hadir', free: false, desc: 'Struktur jantung 4 ruang, katup bikuspid/trikuspid, dan sirkulasi darah.', specimen: 'Cor Humanum' },
+      { id: 'sistem-pencernaan', num: 'MODUL 03', title: 'Sistem Pencernaan', status: 'Segera Hadir', free: false, desc: 'Saluran pencernaan mekanik dan kimiawi lambung hingga usus.', specimen: 'Tractus Digestivus' },
+      { id: 'sistem-ekskresi', num: 'MODUL 04', title: 'Sistem Ekskresi', status: 'Segera Hadir', free: false, desc: 'Struktur ginjal, nefron, filtrasi darah, dan pembentukan urine.', specimen: 'Ren & Nefron' },
+      { id: 'sistem-gerak', num: 'MODUL 05', title: 'Sistem Gerak Manusia', status: 'Segera Hadir', free: false, desc: 'Rangka aksial, apendikular, sendi sinovial, dan kontraksi otot.', specimen: 'Skeleton Humanum' },
+      { id: 'struktur-sel', num: 'MODUL 06', title: 'Sel Tumbuhan & Hewan', status: 'Segera Hadir', free: false, desc: 'Organel sel: nukleus, mitokondria, kloroplas, dan dinding sel.', specimen: 'Cellula' }
     ];
 
+    const DEFAULT_FACTS = [
+      { label: 'Lokasi', value: 'Rongga dada, dilindungi tulang rusuk' },
+      { label: 'Jumlah lobus', value: 'Kanan 3, kiri 2' },
+      { label: 'Napas per hari', value: '± 20.000 kali' },
+      { label: 'Oksigen udara', value: '± 21% dihirup, ± 16% dihembuskan' }
+    ];
+
+    const DEFAULT_AIRWAY = [
+      { step: 1, name: 'Hidung', inModule: false },
+      { step: 2, name: 'Faring', inModule: false },
+      { step: 3, name: 'Laring', inModule: false },
+      { step: 4, name: 'Trakea', inModule: true },
+      { step: 5, name: 'Bronkus', inModule: true },
+      { step: 6, name: 'Bronkiolus', inModule: true },
+      { step: 7, name: 'Alveolus', inModule: true }
+    ];
+
+    // LocalStorage helper functions
+    const loadStored = (key, fallback) => {
+      try {
+        const val = localStorage.getItem('3dfunlearn_' + key);
+        return val ? JSON.parse(val) : fallback;
+      } catch (e) {
+        return fallback;
+      }
+    };
+
+    const saveStored = (key, data) => {
+      try {
+        localStorage.setItem('3dfunlearn_' + key, JSON.stringify(data));
+      } catch (e) {}
+    };
+
+    // --- Audio Service Synthesis ---
     let audioCtx = null;
-    let isAudioOn = false;
-    function toggleGlobalAudio() {
-      if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-      if (audioCtx.state === 'suspended') audioCtx.resume();
-      isAudioOn = !isAudioOn;
-      return isAudioOn;
+    let breathOsc = null;
+    let breathGain = null;
+
+    function playClickSound() {
+      try {
+        const ctx = new (window.AudioContext || window.webkitAudioContext)();
+        const osc = ctx.createOscillator();
+        const gain = ctx.createGain();
+        osc.type = 'sine';
+        osc.frequency.setValueAtTime(800, ctx.currentTime);
+        osc.frequency.exponentialRampToValueAtTime(400, ctx.currentTime + 0.05);
+        gain.gain.setValueAtTime(0.15, ctx.currentTime);
+        gain.gain.linearRampToValueAtTime(0.01, ctx.currentTime + 0.05);
+        osc.connect(gain);
+        gain.connect(ctx.destination);
+        osc.start();
+        osc.stop(ctx.currentTime + 0.05);
+      } catch (e) {}
     }
 
-    function LungCanvas({ selectedId, onSelect, isBreathing }) {
+    function toggleGlobalAudio() {
+      if (!audioCtx) {
+        audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+        breathGain = audioCtx.createGain();
+        breathGain.gain.setValueAtTime(0.04, audioCtx.currentTime);
+        breathGain.connect(audioCtx.destination);
+
+        breathOsc = audioCtx.createOscillator();
+        breathOsc.type = 'triangle';
+        breathOsc.frequency.setValueAtTime(65, audioCtx.currentTime);
+        breathOsc.connect(breathGain);
+        breathOsc.start();
+        return true;
+      } else {
+        if (audioCtx.state === 'running') {
+          audioCtx.suspend();
+          return false;
+        } else {
+          audioCtx.resume();
+          return true;
+        }
+      }
+    }
+
+    // --- Three.js Lung Canvas Component ---
+    function LungCanvas({ selectedId, onSelect, isBreathing, hotspots }) {
       const mountRef = useRef(null);
-      const [rotating, setRotating] = useState(true);
+      const sceneRef = useRef(null);
+      const rendererRef = useRef(null);
+      const cameraRef = useRef(null);
+      const lungsGroupRef = useRef(null);
+      const diaphragmRef = useRef(null);
+      const pinsRef = useRef([]);
 
       useEffect(() => {
         const container = mountRef.current;
         if (!container) return;
 
-        const scene = new THREE.Scene();
-        scene.background = new THREE.Color(0x070b14);
+        const width = container.clientWidth || 600;
+        const height = container.clientHeight || 500;
 
-        const camera = new THREE.PerspectiveCamera(45, container.clientWidth / container.clientHeight, 0.1, 100);
-        camera.position.z = 6.2;
+        const scene = new THREE.Scene();
+        sceneRef.current = scene;
+
+        const camera = new THREE.PerspectiveCamera(45, width / height, 0.1, 100);
+        camera.position.set(0, 0, 6.2);
+        cameraRef.current = camera;
 
         const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
-        renderer.setSize(container.clientWidth, container.clientHeight);
+        renderer.setSize(width, height);
         renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+        rendererRef.current = renderer;
         container.innerHTML = '';
         container.appendChild(renderer.domElement);
 
-        scene.add(new THREE.AmbientLight(0xffffff, 0.9));
-        const light1 = new THREE.DirectionalLight(0x38bdf8, 1.4);
-        light1.position.set(5, 8, 6);
-        scene.add(light1);
-        const light2 = new THREE.DirectionalLight(0xf43f5e, 1.1);
-        light2.position.set(-6, -2, 4);
-        scene.add(light2);
+        // Lighting
+        const ambLight = new THREE.AmbientLight(0xffffff, 0.85);
+        scene.add(ambLight);
+        const dirLight = new THREE.DirectionalLight(0x6ee7b7, 1.4);
+        dirLight.position.set(5, 8, 6);
+        scene.add(dirLight);
+        const rimLight = new THREE.DirectionalLight(0x06b6d4, 1.0);
+        rimLight.position.set(-5, -3, -4);
+        scene.add(rimLight);
 
-        const grid = new THREE.GridHelper(14, 28, 0x1e293b, 0x0f172a);
-        grid.position.y = -2.8;
-        scene.add(grid);
-
+        // Lungs Model Group
         const rootGroup = new THREE.Group();
+        lungsGroupRef.current = rootGroup;
         scene.add(rootGroup);
 
-        const lungMatRight = new THREE.MeshStandardMaterial({ color: 0xdf6a7a, roughness: 0.35, metalness: 0.1 });
-        const lungMatLeft = new THREE.MeshStandardMaterial({ color: 0xd95f70, roughness: 0.35, metalness: 0.1 });
-        const tracheaMat = new THREE.MeshStandardMaterial({ color: 0xe2e8f0, roughness: 0.25 });
-        const cartilageMat = new THREE.MeshStandardMaterial({ color: 0x94a3b8 });
-        const bronchMat = new THREE.MeshStandardMaterial({ color: 0x38bdf8, roughness: 0.3, emissive: 0x0284c7, emissiveIntensity: 0.2 });
-
-        const rightGroup = new THREE.Group();
-        const rSup = new THREE.Mesh(new THREE.SphereGeometry(0.85, 24, 18), lungMatRight);
-        rSup.scale.set(1.0, 1.1, 0.85); rSup.position.set(-1.1, 0.7, 0); rSup.rotation.set(0.1, 0.15, 0.2);
-        const rMid = new THREE.Mesh(new THREE.SphereGeometry(0.75, 24, 18), lungMatRight);
-        rMid.scale.set(1.05, 0.8, 0.85); rMid.position.set(-1.25, -0.1, 0.1);
-        const rInf = new THREE.Mesh(new THREE.SphereGeometry(0.95, 24, 18), lungMatRight);
-        rInf.scale.set(1.15, 1.1, 0.9); rInf.position.set(-1.2, -1.0, -0.05);
-        rightGroup.add(rSup, rMid, rInf);
-        rootGroup.add(rightGroup);
-
-        const leftGroup = new THREE.Group();
-        const lSup = new THREE.Mesh(new THREE.SphereGeometry(0.85, 24, 18), lungMatLeft);
-        lSup.scale.set(0.95, 1.15, 0.85); lSup.position.set(1.1, 0.65, 0); lSup.rotation.set(0.1, -0.15, -0.2);
-        const lInf = new THREE.Mesh(new THREE.SphereGeometry(0.9, 24, 18), lungMatLeft);
-        lInf.scale.set(1.05, 1.1, 0.88); lInf.position.set(1.15, -0.9, -0.05);
-        leftGroup.add(lSup, lInf);
-        rootGroup.add(leftGroup);
-
-        const tracheaGroup = new THREE.Group();
-        const trMain = new THREE.Mesh(new THREE.CylinderGeometry(0.24, 0.22, 1.6, 20), tracheaMat);
-        trMain.position.set(0, 1.8, 0.1);
-        tracheaGroup.add(trMain);
-        for (let i = 0; i < 7; i++) {
-          const ring = new THREE.Mesh(new THREE.TorusGeometry(0.25, 0.035, 8, 20), cartilageMat);
-          ring.position.set(0, 1.2 + i * 0.18, 0.1);
-          ring.rotation.x = Math.PI / 2;
-          tracheaGroup.add(ring);
-        }
-        const rBr = new THREE.Mesh(new THREE.CylinderGeometry(0.16, 0.12, 0.9, 12), bronchMat);
-        rBr.position.set(-0.45, 0.8, 0.05); rBr.rotation.z = Math.PI / 4;
-        const lBr = new THREE.Mesh(new THREE.CylinderGeometry(0.14, 0.11, 1.05, 12), bronchMat);
-        lBr.position.set(0.5, 0.75, 0.05); lBr.rotation.z = -Math.PI / 3.4;
-        tracheaGroup.add(rBr, lBr);
-        rootGroup.add(tracheaGroup);
-
-        const dia = new THREE.Mesh(new THREE.CylinderGeometry(2.6, 2.8, 0.45, 24), new THREE.MeshStandardMaterial({ color: 0x9f1239, opacity: 0.75, transparent: true }));
-        dia.position.set(0, -2.1, 0); dia.scale.set(1.0, 0.5, 0.75);
-        rootGroup.add(dia);
-
-        const sprites = [];
-        HOTSPOTS_DATA.forEach(hs => {
-          const c = document.createElement('canvas'); c.width = 64; c.height = 64;
-          const ctx = c.getContext('2d');
-          ctx.beginPath(); ctx.arc(32, 32, 24, 0, Math.PI * 2); ctx.fillStyle = '#10b981'; ctx.fill();
-          ctx.lineWidth = 4; ctx.strokeStyle = '#fff'; ctx.stroke();
-          ctx.font = 'bold 28px sans-serif'; ctx.fillStyle = '#fff'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
-          ctx.fillText(hs.id, 32, 32);
-          const sp = new THREE.Sprite(new THREE.SpriteMaterial({ map: new THREE.CanvasTexture(c), depthTest: false }));
-          sp.position.set(...hs.pos); sp.scale.set(0.5, 0.5, 1);
-          rootGroup.add(sp);
-          sprites.push({ id: hs.id, sp });
+        // Material
+        const lungMat = new THREE.MeshStandardMaterial({
+          color: 0xef4444,
+          roughness: 0.35,
+          metalness: 0.1,
+          bumpScale: 0.05
         });
 
-        let isDown = false, prev = { x: 0, y: 0 };
-        const onDown = e => { isDown = true; prev = { x: e.clientX, y: e.clientY }; };
-        const onMove = e => {
-          if (!isDown) return;
-          rootGroup.rotation.y += (e.clientX - prev.x) * 0.01;
-          rootGroup.rotation.x += (e.clientY - prev.y) * 0.01;
-          prev = { x: e.clientX, y: e.clientY };
+        // Right Lung (3 Lobes)
+        const rightGroup = new THREE.Group();
+        const rSup = new THREE.Mesh(new THREE.SphereGeometry(0.72, 24, 24), lungMat);
+        rSup.position.set(-1.25, 0.65, 0);
+        rSup.scale.set(1.0, 1.35, 0.85);
+        rightGroup.add(rSup);
+
+        const rMed = new THREE.Mesh(new THREE.SphereGeometry(0.68, 24, 24), lungMat);
+        rMed.position.set(-1.3, -0.05, 0.1);
+        rMed.scale.set(1.05, 1.1, 0.9);
+        rightGroup.add(rMed);
+
+        const rInf = new THREE.Mesh(new THREE.SphereGeometry(0.75, 24, 24), lungMat);
+        rInf.position.set(-1.25, -0.85, 0);
+        rInf.scale.set(1.15, 1.25, 0.95);
+        rightGroup.add(rInf);
+        rootGroup.add(rightGroup);
+
+        // Left Lung (2 Lobes + Cardiac Notch)
+        const leftGroup = new THREE.Group();
+        const lSup = new THREE.Mesh(new THREE.SphereGeometry(0.7, 24, 24), lungMat);
+        lSup.position.set(1.25, 0.55, 0);
+        lSup.scale.set(0.95, 1.4, 0.85);
+        leftGroup.add(lSup);
+
+        const lInf = new THREE.Mesh(new THREE.SphereGeometry(0.78, 24, 24), lungMat);
+        lInf.position.set(1.3, -0.75, 0);
+        lInf.scale.set(1.1, 1.3, 0.9);
+        leftGroup.add(lInf);
+        rootGroup.add(leftGroup);
+
+        // Trachea & Bronchi
+        const tracheaMat = new THREE.MeshStandardMaterial({ color: 0x64748b, roughness: 0.4 });
+        const trachea = new THREE.Mesh(new THREE.CylinderGeometry(0.18, 0.18, 1.6, 20), tracheaMat);
+        trachea.position.set(0, 1.5, 0);
+        rootGroup.add(trachea);
+
+        // Diaphragm
+        const diaMat = new THREE.MeshStandardMaterial({ color: 0x9f1239, transparent: true, opacity: 0.8 });
+        const diaphragm = new THREE.Mesh(new THREE.CylinderGeometry(2.5, 2.7, 0.4, 24), diaMat);
+        diaphragm.position.set(0, -2.1, 0);
+        diaphragm.scale.set(1, 0.4, 0.7);
+        diaphragmRef.current = diaphragm;
+        rootGroup.add(diaphragm);
+
+        // Hotspot Pins
+        const pins = [];
+        const activeHotspots = hotspots || DEFAULT_HOTSPOTS;
+        activeHotspots.forEach(hs => {
+          const pinCanvas = document.createElement('canvas');
+          pinCanvas.width = 64; pinCanvas.height = 64;
+          const ctx = pinCanvas.getContext('2d');
+          ctx.beginPath();
+          ctx.arc(32, 32, 26, 0, Math.PI * 2);
+          ctx.fillStyle = '#10b981';
+          ctx.fill();
+          ctx.lineWidth = 4;
+          ctx.strokeStyle = '#ffffff';
+          ctx.stroke();
+          ctx.fillStyle = '#ffffff';
+          ctx.font = 'bold 26px sans-serif';
+          ctx.textAlign = 'center';
+          ctx.textBaseline = 'middle';
+          ctx.fillText(hs.id, 32, 32);
+
+          const tex = new THREE.CanvasTexture(pinCanvas);
+          const spriteMat = new THREE.SpriteMaterial({ map: tex, depthTest: false });
+          const sprite = new THREE.Sprite(spriteMat);
+          const p = hs.pos || hs.position || [0, 0, 0];
+          sprite.position.set(p[0], p[1], p[2]);
+          sprite.scale.set(0.48, 0.48, 1);
+          rootGroup.add(sprite);
+          pins.push({ id: hs.id, sprite, pos: p });
+        });
+        pinsRef.current = pins;
+
+        // Interaction (Orbit rotation on drag)
+        let isDown = false;
+        let prevX = 0, prevY = 0;
+        let rotY = 0, rotX = 0;
+
+        const onDown = (e) => {
+          isDown = true;
+          const clientX = e.touches ? e.touches[0].clientX : e.clientX;
+          const clientY = e.touches ? e.touches[0].clientY : e.clientY;
+          prevX = clientX; prevY = clientY;
         };
+
+        const onMove = (e) => {
+          if (!isDown) return;
+          const clientX = e.touches ? e.touches[0].clientX : e.clientX;
+          const clientY = e.touches ? e.touches[0].clientY : e.clientY;
+          const deltaX = clientX - prevX;
+          const deltaY = clientY - prevY;
+          prevX = clientX; prevY = clientY;
+          rotY += deltaX * 0.008;
+          rotX += deltaY * 0.008;
+        };
+
         const onUp = () => { isDown = false; };
+
         container.addEventListener('mousedown', onDown);
         window.addEventListener('mousemove', onMove);
         window.addEventListener('mouseup', onUp);
+        container.addEventListener('touchstart', onDown);
+        window.addEventListener('touchmove', onMove);
+        window.addEventListener('touchend', onUp);
 
-        let reqId;
-        const clock = new THREE.Clock();
-        const animate = () => {
-          reqId = requestAnimationFrame(animate);
-          const t = clock.getElapsedTime();
-          if (rotating && !isDown) rootGroup.rotation.y += 0.005;
-
-          if (isBreathing) {
-            const scale = 1 + Math.sin(t * 1.8) * 0.07;
-            rightGroup.scale.set(scale, scale, scale);
-            leftGroup.scale.set(scale, scale, scale);
-            dia.position.y = -2.1 - Math.sin(t * 1.8) * 0.15;
+        // Click Raycasting on Pins
+        const onClick = (e) => {
+          const rect = container.getBoundingClientRect();
+          const mouse = new THREE.Vector2(
+            ((e.clientX - rect.left) / rect.width) * 2 - 1,
+            -((e.clientY - rect.top) / rect.height) * 2 + 1
+          );
+          const raycaster = new THREE.Raycaster();
+          raycaster.setFromCamera(mouse, camera);
+          const sprites = pins.map(p => p.sprite);
+          const hits = raycaster.intersectObjects(sprites);
+          if (hits.length > 0) {
+            playClickSound();
+            const hitPin = pins.find(p => p.sprite === hits[0].object);
+            if (hitPin) onSelect(hitPin.id);
           }
+        };
+        container.addEventListener('click', onClick);
+
+        // Animation Loop
+        let frameId;
+        let time = 0;
+        const animate = () => {
+          time += 0.03;
+          rootGroup.rotation.y = rotY;
+          rootGroup.rotation.x = rotX;
+
+          // Breathing
+          if (isBreathing) {
+            const breath = Math.sin(time * 2);
+            rightGroup.scale.set(1 + breath * 0.05, 1 + breath * 0.04, 1 + breath * 0.06);
+            leftGroup.scale.set(1 + breath * 0.05, 1 + breath * 0.04, 1 + breath * 0.06);
+            if (diaphragmRef.current) {
+              diaphragmRef.current.position.y = -2.1 - breath * 0.08;
+            }
+          }
+
+          // Pins Pulse
+          pins.forEach(p => {
+            const isSel = p.id === selectedId;
+            const pulse = isSel ? Math.sin(time * 6) * 0.08 : 0;
+            p.sprite.scale.set(0.48 + pulse + (isSel ? 0.15 : 0), 0.48 + pulse + (isSel ? 0.15 : 0), 1);
+          });
+
           renderer.render(scene, camera);
+          frameId = requestAnimationFrame(animate);
         };
         animate();
 
+        const handleResize = () => {
+          if (!container) return;
+          const w = container.clientWidth;
+          const h = container.clientHeight;
+          camera.aspect = w / h;
+          camera.updateProjectionMatrix();
+          renderer.setSize(w, h);
+        };
+        window.addEventListener('resize', handleResize);
+
         return () => {
-          cancelAnimationFrame(reqId);
+          cancelAnimationFrame(frameId);
+          window.removeEventListener('resize', handleResize);
           container.removeEventListener('mousedown', onDown);
           window.removeEventListener('mousemove', onMove);
           window.removeEventListener('mouseup', onUp);
-          renderer.dispose();
+          container.removeEventListener('click', onClick);
         };
-      }, [rotating, isBreathing]);
+      }, [selectedId, isBreathing, hotspots]);
 
       return (
-        <div className="relative w-full h-full min-h-[460px]">
-          <div className="absolute top-4 left-4 right-4 z-20 flex justify-between pointer-events-none">
-            <span className="bg-slate-900/80 px-3 py-1.5 rounded-full text-xs font-semibold text-emerald-400 border border-slate-700 pointer-events-auto">
-              Pulmones — paru-paru manusia
-            </span>
-            <button onClick={() => setRotating(!rotating)} className="bg-slate-800 px-3 py-1.5 rounded-lg text-xs font-medium text-slate-200 border border-slate-700 pointer-events-auto hover:bg-slate-700">
-              Putar: {rotating ? 'Aktif' : 'Diam'}
-            </button>
-          </div>
-          <div ref={mountRef} className="w-full h-full cursor-grab active:cursor-grabbing" />
-          <div className="absolute bottom-3 left-0 right-0 text-center pointer-events-none text-xs text-slate-400">
-            Seret untuk memutar · Gulir untuk zoom
+        <div ref={mountRef} className="w-full h-full relative canvas-container cursor-grab active:cursor-grabbing">
+          <div className="absolute top-4 left-4 z-10 px-3 py-1.5 rounded-full bg-slate-900/80 border border-slate-700 text-[11px] text-slate-300 pointer-events-none flex items-center gap-1.5">
+            <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
+            <span>Tahan & Geser untuk memutar 3D</span>
           </div>
         </div>
       );
     }
 
+    // --- Main App Component ---
     function App() {
       const [route, setRoute] = useState('/');
       const [catalogOpen, setCatalogOpen] = useState(false);
@@ -221,11 +388,72 @@
       const [selectedHotspot, setSelectedHotspot] = useState(1);
       const [diving, setDiving] = useState(false);
       const [shareOpen, setShareOpen] = useState(false);
+      const [adminTab, setAdminTab] = useState('hotspots');
+      const [toastMsg, setToastMsg] = useState(null);
 
-      const navTo = (r) => { setRoute(r); window.scrollTo({ top: 0, behavior: 'smooth' }); };
+      // Data States with LocalStorage
+      const [hotspots, setHotspots] = useState(() => loadStored('hotspots', DEFAULT_HOTSPOTS));
+      const [modules, setModules] = useState(() => loadStored('modules', DEFAULT_MODULES));
+      const [facts, setFacts] = useState(() => loadStored('facts', DEFAULT_FACTS));
+      const [airway, setAirway] = useState(() => loadStored('airway', DEFAULT_AIRWAY));
+      const [trivia, setTrivia] = useState(() => {
+        try {
+          return localStorage.getItem('3dfunlearn_trivia') || 'Kalau seluruh dinding alveolus dibentangkan, luasnya sekitar 70 m² — kira-kira seluas lantai ruang kelasmu!';
+        } catch(e) {
+          return 'Kalau seluruh dinding alveolus dibentangkan, luasnya sekitar 70 m² — kira-kira seluas lantai ruang kelasmu!';
+        }
+      });
+
+      const navTo = (r) => { 
+        playClickSound();
+        setRoute(r); 
+        window.scrollTo({ top: 0, behavior: 'smooth' }); 
+      };
+
+      const showToast = (msg) => {
+        setToastMsg(msg);
+        setTimeout(() => setToastMsg(null), 3000);
+      };
+
+      const handleSaveAdminData = () => {
+        playClickSound();
+        saveStored('hotspots', hotspots);
+        saveStored('modules', modules);
+        saveStored('facts', facts);
+        saveStored('airway', airway);
+        try { localStorage.setItem('3dfunlearn_trivia', trivia); } catch(e) {}
+        showToast('✓ Semua perubahan materi berhasil disimpan!');
+      };
+
+      const handleResetAdminData = () => {
+        if (confirm('Kembalikan semua materi ke default kurikulum?')) {
+          playClickSound();
+          localStorage.removeItem('3dfunlearn_hotspots');
+          localStorage.removeItem('3dfunlearn_modules');
+          localStorage.removeItem('3dfunlearn_facts');
+          localStorage.removeItem('3dfunlearn_airway');
+          localStorage.removeItem('3dfunlearn_trivia');
+          setHotspots(DEFAULT_HOTSPOTS);
+          setModules(DEFAULT_MODULES);
+          setFacts(DEFAULT_FACTS);
+          setAirway(DEFAULT_AIRWAY);
+          setTrivia('Kalau seluruh dinding alveolus dibentangkan, luasnya sekitar 70 m² — kira-kira seluas lantai ruang kelasmu!');
+          showToast('Data materi berhasil direset ke default.');
+        }
+      };
+
+      const activeHotspotObj = hotspots.find(h => h.id === selectedHotspot) || hotspots[0];
 
       return (
         <div className="min-h-screen bg-[#0b0f19] text-slate-100 flex flex-col">
+          {/* Toast Notification */}
+          {toastMsg && (
+            <div className="fixed bottom-6 right-6 z-50 bg-emerald-600 text-white px-5 py-3 rounded-xl shadow-2xl border border-emerald-400 font-semibold animate-bounce">
+              {toastMsg}
+            </div>
+          )}
+
+          {/* Top Navbar */}
           {route !== '/masuk' && (
             <header className="border-b border-slate-800 bg-[#0b0f19]/90 sticky top-0 z-40 px-4 py-3 backdrop-blur-md">
               <div className="max-w-7xl mx-auto flex items-center justify-between">
@@ -234,8 +462,11 @@
                   <span>3d<span className="text-emerald-400">Funlearn</span></span>
                 </div>
                 <div className="flex items-center gap-4 text-xs font-semibold">
-                  <button onClick={() => navTo('/')} className="hover:text-emerald-400">Cara kerja</button>
+                  <button onClick={() => navTo('/')} className="hover:text-emerald-400 hidden sm:block">Cara kerja</button>
                   <button onClick={() => setCatalogOpen(true)} className="hover:text-emerald-400">Modul</button>
+                  <button onClick={() => navTo('/admin')} className="text-emerald-400 font-bold hover:underline flex items-center gap-1 bg-emerald-500/10 px-2.5 py-1 rounded-lg border border-emerald-500/30">
+                    ⚙ Admin
+                  </button>
                   <button onClick={() => navTo('/masuk')} className="hover:text-emerald-400">Masuk</button>
                   <span className="px-2 py-0.5 rounded bg-slate-800 text-slate-400 border border-slate-700">ID</span>
                   <button onClick={() => navTo('/modul/sistem-pernapasan')} className="px-3.5 py-1.5 rounded-xl bg-emerald-500 text-slate-950 hover:bg-emerald-400 transition-colors">
@@ -246,9 +477,12 @@
             </header>
           )}
 
+          {/* Router Content */}
           <main className="flex-1">
+            {/* 1. Landing Page */}
             {route === '/' && (
               <div>
+                {/* Hero */}
                 <section className="max-w-7xl mx-auto px-4 py-16 sm:py-24 grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
                   <div className="space-y-6">
                     <span className="px-3 py-1 rounded-full text-xs font-bold bg-emerald-500/10 text-emerald-400 border border-emerald-500/30">
@@ -270,10 +504,11 @@
                     </div>
                   </div>
                   <div className="h-[480px] bg-slate-900 border border-slate-800 rounded-3xl overflow-hidden shadow-2xl relative">
-                    <LungCanvas selectedId={selectedHotspot} onSelect={setSelectedHotspot} isBreathing={true} />
+                    <LungCanvas selectedId={selectedHotspot} onSelect={setSelectedHotspot} isBreathing={true} hotspots={hotspots} />
                   </div>
                 </section>
 
+                {/* Cara Kerja */}
                 <section className="bg-[#080d1a] py-20 border-y border-slate-800">
                   <div className="max-w-7xl mx-auto px-4 text-center">
                     <h3 className="text-3xl font-extrabold text-white mb-12">Bawa sains hidup di depan mata murid.</h3>
@@ -298,18 +533,24 @@
                   </div>
                 </section>
 
+                {/* Dimulai Dari IPA */}
                 <section className="max-w-7xl mx-auto px-4 py-20">
                   <h3 className="text-3xl font-extrabold text-white mb-2">Dimulai dari IPA.</h3>
                   <p className="text-slate-400 text-sm mb-8">6 modul IPA Kelas 8 siap dipakai hari ini. Semua dalam satu langganan.</p>
                   <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                    {ALL_MODULES.map(m => (
-                      <div key={m.id} onClick={() => m.free && navTo('/modul/sistem-pernapasan')} className={`p-6 rounded-2xl border ${m.free ? 'bg-slate-900 border-slate-700 hover:border-emerald-500 cursor-pointer shadow-lg' : 'bg-slate-900/40 border-slate-800 opacity-60'}`}>
-                        <div className="flex justify-between text-xs font-bold mb-2">
-                          <span className="text-slate-400">{m.num}</span>
-                          <span className={m.free ? 'text-emerald-400' : 'text-slate-500'}>{m.free ? 'GRATIS' : 'Segera Hadir'}</span>
+                    {modules.map(m => (
+                      <div key={m.id} className="p-6 bg-slate-900 border border-slate-800 rounded-2xl space-y-3">
+                        <div className="flex justify-between items-center text-xs">
+                          <span className="font-bold text-emerald-400">{m.num}</span>
+                          <span className="px-2 py-0.5 rounded bg-slate-800 text-slate-400">{m.status}</span>
                         </div>
-                        <h4 className="text-lg font-bold text-white mb-2">{m.title}</h4>
-                        <p className="text-xs text-slate-400">{m.desc}</p>
+                        <h4 className="text-lg font-bold text-white">{m.title}</h4>
+                        <p className="text-xs text-slate-300">{m.desc}</p>
+                        {m.free && (
+                          <button onClick={() => navTo('/modul/sistem-pernapasan')} className="text-xs text-emerald-400 font-bold hover:underline">
+                            Buka modul ini →
+                          </button>
+                        )}
                       </div>
                     ))}
                   </div>
@@ -317,41 +558,62 @@
               </div>
             )}
 
+            {/* 2. Modul Sistem Pernapasan */}
             {route === '/modul/sistem-pernapasan' && (
-              <div className="flex flex-col lg:flex-row h-[calc(100vh-60px)]">
-                <aside className="w-full lg:w-80 bg-[#0b0f19] border-r border-slate-800 p-6 space-y-6 overflow-y-auto">
+              <div className="flex flex-col lg:flex-row h-[calc(100vh-65px)]">
+                {/* Left Sidebar */}
+                <aside className="w-full lg:w-80 bg-[#0b0f19] border-r border-slate-800 p-5 space-y-6 overflow-y-auto shrink-0">
                   <div>
-                    <span className="text-xs font-bold text-emerald-400">MODUL 01 · IPA Kelas 8</span>
-                    <h2 className="text-2xl font-black text-white">Sistem Pernapasan</h2>
-                    <p className="text-xs text-slate-400 mt-1">Pratinjau · materi sedang diverifikasi</p>
+                    <div className="text-[10px] font-bold text-emerald-400 uppercase">MODUL 01 · IPA KELAS 8</div>
+                    <h2 className="text-xl font-black text-white">Sistem Pernapasan</h2>
+                    <p className="text-xs text-slate-400">Struktur & Fungsi Tubuh</p>
                   </div>
 
-                  <div>
-                    <div className="text-xs font-bold text-slate-400 uppercase mb-2">BAGIAN (12 TITIK BELAJAR)</div>
-                    <div className="space-y-1.5">
-                      {HOTSPOTS_DATA.map(h => (
-                        <button key={h.id} onClick={() => { setSelectedHotspot(h.id); setDiving(false); }} className={`w-full text-left p-2.5 rounded-xl text-xs font-semibold border ${selectedHotspot === h.id && !diving ? 'bg-emerald-500/20 border-emerald-500 text-white' : 'bg-slate-900 border-slate-800 text-slate-300'}`}>
-                          {h.id}. {h.name}
-                        </button>
-                      ))}
-                    </div>
+                  {/* Hotspots Buttons */}
+                  <div className="space-y-1.5">
+                    <div className="text-xs font-bold text-slate-400 uppercase mb-2">BAGIAN ({hotspots.length} titik)</div>
+                    {hotspots.map(h => (
+                      <button
+                        key={h.id}
+                        onClick={() => { playClickSound(); setDiving(false); setSelectedHotspot(h.id); }}
+                        className={`w-full text-left px-3 py-2 rounded-xl text-xs font-semibold flex items-center justify-between border ${selectedHotspot === h.id && !diving ? 'bg-emerald-500/20 border-emerald-500/50 text-white' : 'bg-slate-900 border-slate-800 text-slate-300'}`}
+                      >
+                        <div className="flex items-center gap-2">
+                          <span className="w-5 h-5 rounded-full bg-slate-800 text-center leading-5 text-[10px] font-bold text-emerald-400">{h.id}</span>
+                          <span>{h.name}</span>
+                        </div>
+                      </button>
+                    ))}
                   </div>
 
-                  <div>
-                    <div className="text-xs font-bold text-slate-400 uppercase mb-2">AKTIVITAS</div>
-                    <div className="space-y-2">
-                      <button onClick={() => setBreathing(!breathing)} className={`w-full p-3 rounded-xl text-xs font-bold border flex justify-between ${breathing ? 'bg-cyan-500/20 border-cyan-500 text-cyan-300' : 'bg-slate-900 border-slate-800 text-slate-400'}`}>
-                        <span>Animasi Napas</span>
-                        <span>{breathing ? 'Aktif' : 'Mati'}</span>
-                      </button>
-                      <button onClick={() => setDiving(!diving)} className={`w-full p-3 rounded-xl text-xs font-bold border flex justify-between ${diving ? 'bg-indigo-500/30 border-indigo-500 text-indigo-300' : 'bg-slate-900 border-slate-800 text-slate-300'}`}>
-                        <span>Menyelam ke alveolus</span>
-                        <span>{diving ? 'Di dalam' : 'Buka'}</span>
-                      </button>
-                    </div>
+                  {/* Activities */}
+                  <div className="space-y-2 pt-4 border-t border-slate-800">
+                    <div className="text-xs font-bold text-slate-400 uppercase">AKTIVITAS</div>
+                    <button
+                      onClick={() => { playClickSound(); setDiving(false); setBreathing(!breathing); }}
+                      className={`w-full text-left p-3 rounded-xl text-xs border flex items-center justify-between ${breathing && !diving ? 'bg-cyan-500/20 border-cyan-500/50 text-white' : 'bg-slate-900 border-slate-800 text-slate-300'}`}
+                    >
+                      <div>
+                        <div className="font-bold">Animasi Napas</div>
+                        <div className="text-[10px] text-slate-400">Lihat diafragma memompa</div>
+                      </div>
+                      <span className="text-[10px] px-2 py-0.5 rounded bg-cyan-500/20 text-cyan-300">{breathing ? 'Aktif' : 'Mati'}</span>
+                    </button>
+
+                    <button
+                      onClick={() => { playClickSound(); setDiving(!diving); }}
+                      className={`w-full text-left p-3 rounded-xl text-xs border flex items-center justify-between ${diving ? 'bg-indigo-500/20 border-indigo-500/50 text-white' : 'bg-slate-900 border-slate-800 text-slate-300'}`}
+                    >
+                      <div>
+                        <div className="font-bold">Menyelam ke Alveolus</div>
+                        <div className="text-[10px] text-slate-400">Kantong udara mikroskopis</div>
+                      </div>
+                      <span className="text-[10px] px-2 py-0.5 rounded bg-indigo-500 text-white">{diving ? 'Di dalam' : 'Buka'}</span>
+                    </button>
                   </div>
                 </aside>
 
+                {/* 3D Canvas Area */}
                 <div className="flex-1 relative bg-[#070b14]">
                   {diving ? (
                     <div className="w-full h-full flex flex-col items-center justify-center p-8 text-center space-y-4">
@@ -363,10 +625,14 @@
                       </button>
                     </div>
                   ) : (
-                    <LungCanvas selectedId={selectedHotspot} onSelect={setSelectedHotspot} isBreathing={breathing} />
+                    <LungCanvas selectedId={selectedHotspot} onSelect={setSelectedHotspot} isBreathing={breathing} hotspots={hotspots} />
                   )}
 
+                  {/* Actions Bar */}
                   <div className="absolute top-4 right-4 flex gap-2">
+                    <button onClick={() => navTo('/admin')} className="px-3 py-1.5 rounded-lg bg-emerald-500/20 text-xs font-semibold text-emerald-300 border border-emerald-500/40">
+                      ⚙ Edit Materi
+                    </button>
                     <button onClick={() => setShareOpen(true)} className="px-3 py-1.5 rounded-lg bg-slate-800 text-xs font-semibold text-emerald-400 border border-slate-700">
                       Bagikan ke murid (QR)
                     </button>
@@ -376,32 +642,317 @@
                   </div>
                 </div>
 
-                <aside className="w-full lg:w-80 bg-[#0b0f19] border-l border-slate-800 p-6 space-y-6 overflow-y-auto">
+                {/* Right Facts Panel */}
+                <aside className="w-full lg:w-80 bg-[#0b0f19] border-l border-slate-800 p-6 space-y-6 overflow-y-auto shrink-0">
                   <div className="p-4 bg-slate-900 rounded-2xl border border-slate-800 space-y-2">
                     <div className="text-[10px] font-bold text-emerald-400 uppercase">ORGAN · SISTEM PERNAPASAN</div>
                     <h3 className="text-xl font-bold text-white">Paru-paru</h3>
                     <p className="text-xs text-slate-300">Pabrik oksigen tubuhmu. Memasukkan O₂ dan membuang CO₂.</p>
+                    
+                    {activeHotspotObj && (
+                      <div className="pt-2 border-t border-slate-800 space-y-1">
+                        <div className="text-xs font-bold text-emerald-300">• {activeHotspotObj.name}</div>
+                        <p className="text-xs text-slate-400">{activeHotspotObj.desc || activeHotspotObj.description}</p>
+                        {activeHotspotObj.func && (
+                          <div className="text-[11px] text-emerald-200 mt-1"><strong>Fungsi:</strong> {activeHotspotObj.func}</div>
+                        )}
+                      </div>
+                    )}
                   </div>
+
                   <div>
                     <h4 className="text-xs font-bold text-slate-400 uppercase mb-2">FAKTA KUNCI</h4>
                     <div className="grid grid-cols-2 gap-2 text-xs">
-                      <div className="p-2.5 bg-slate-900 rounded-lg border border-slate-800">
-                        <span className="text-slate-400 block text-[10px]">Lobus</span>
-                        <strong className="text-white">3 + 2</strong>
-                      </div>
-                      <div className="p-2.5 bg-slate-900 rounded-lg border border-slate-800">
-                        <span className="text-slate-400 block text-[10px]">Napas / Hari</span>
-                        <strong className="text-white">± 20.000</strong>
-                      </div>
+                      {facts.map((f, idx) => (
+                        <div key={idx} className="p-2.5 bg-slate-900 rounded-lg border border-slate-800">
+                          <span className="text-slate-400 block text-[10px]">{f.label}</span>
+                          <strong className="text-white text-xs">{f.value}</strong>
+                        </div>
+                      ))}
                     </div>
                   </div>
+
+                  <div>
+                    <h4 className="text-xs font-bold text-slate-400 uppercase mb-2">JALUR UDARA</h4>
+                    <div className="space-y-1.5 text-xs">
+                      {airway.map(item => (
+                        <div key={item.step} className="p-2 bg-slate-900/60 rounded-lg border border-slate-800 flex justify-between items-center">
+                          <span className="text-slate-300">{item.step}. {item.name}</span>
+                          {item.inModule && <span className="text-[10px] text-emerald-400">ada di modul</span>}
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+
                   <div className="p-4 bg-amber-500/10 border border-amber-500/20 rounded-2xl text-xs text-amber-200">
-                    <strong>Tahukah kamu?</strong> Kalau seluruh dinding alveolus dibentangkan, luasnya sekitar 70 m² — seluas ruang kelas!
+                    <strong>Tahukah kamu?</strong> {trivia}
                   </div>
                 </aside>
               </div>
             )}
 
+            {/* 3. Panel Admin (Admin Dashboard) */}
+            {route === '/admin' && (
+              <div className="max-w-6xl mx-auto p-6 space-y-6">
+                <div className="flex flex-wrap items-center justify-between gap-4 pb-4 border-b border-slate-800">
+                  <div>
+                    <h2 className="text-2xl font-black text-white flex items-center gap-2">
+                      <span>⚙ Panel Admin Materi 3D</span>
+                      <span className="text-xs font-bold px-2.5 py-0.5 rounded-full bg-emerald-500/20 text-emerald-400 border border-emerald-500/40">
+                        Editor Guru
+                      </span>
+                    </h2>
+                    <p className="text-xs text-slate-400 mt-1">
+                      Edit titik anatomi, koordinat 3D, alur napas, fakta kunci sains, dan katalog modul.
+                    </p>
+                  </div>
+
+                  <div className="flex gap-2">
+                    <button onClick={() => navTo('/modul/sistem-pernapasan')} className="px-3.5 py-2 rounded-xl text-xs font-bold bg-slate-800 border border-slate-700 text-slate-200 hover:bg-slate-700">
+                      Pratinjau Modul 3D
+                    </button>
+                    <button onClick={handleResetAdminData} className="px-3.5 py-2 rounded-xl text-xs font-semibold bg-rose-950/40 text-rose-300 border border-rose-800/50 hover:bg-rose-900/60">
+                      Reset Default
+                    </button>
+                    <button onClick={handleSaveAdminData} className="px-4 py-2 rounded-xl text-xs font-bold bg-emerald-500 text-slate-950 hover:bg-emerald-400 shadow-lg">
+                      Simpan Perubahan
+                    </button>
+                  </div>
+                </div>
+
+                {/* Tabs */}
+                <div className="flex gap-2 border-b border-slate-800 pb-2">
+                  <button onClick={() => setAdminTab('hotspots')} className={`px-4 py-2 rounded-xl text-xs font-bold ${adminTab === 'hotspots' ? 'bg-emerald-500 text-slate-950' : 'bg-slate-900 text-slate-400'}`}>
+                    Titik Belajar 3D ({hotspots.length})
+                  </button>
+                  <button onClick={() => setAdminTab('facts')} className={`px-4 py-2 rounded-xl text-xs font-bold ${adminTab === 'facts' ? 'bg-emerald-500 text-slate-950' : 'bg-slate-900 text-slate-400'}`}>
+                    Fakta Kunci & Trivia
+                  </button>
+                  <button onClick={() => setAdminTab('modules')} className={`px-4 py-2 rounded-xl text-xs font-bold ${adminTab === 'modules' ? 'bg-emerald-500 text-slate-950' : 'bg-slate-900 text-slate-400'}`}>
+                    Katalog 6 Modul IPA
+                  </button>
+                </div>
+
+                {/* TAB: Hotspots */}
+                {adminTab === 'hotspots' && (
+                  <div className="space-y-4">
+                    <div className="flex justify-between items-center bg-slate-900/60 p-4 rounded-xl border border-slate-800">
+                      <span className="text-xs text-slate-300">Ubah teks dan koordinat pin 3D pada model organ.</span>
+                      <button
+                        onClick={() => {
+                          const newId = hotspots.length > 0 ? Math.max(...hotspots.map(h => h.id)) + 1 : 1;
+                          setHotspots([...hotspots, {
+                            id: newId,
+                            name: `Titik Belajar ${newId}`,
+                            shortName: `Titik ${newId}`,
+                            pos: [0, 0, 0.4],
+                            desc: 'Penjelasan anatomi titik ini...',
+                            func: 'Fungsi biologis titik ini...'
+                          }]);
+                        }}
+                        className="px-3 py-1.5 rounded-lg bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 text-xs font-bold"
+                      >
+                        + Tambah Titik Belajar
+                      </button>
+                    </div>
+
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      {hotspots.map((hs, idx) => (
+                        <div key={hs.id} className="p-4 bg-slate-900 rounded-2xl border border-slate-800 space-y-3">
+                          <div className="flex justify-between items-center pb-2 border-b border-slate-800">
+                            <span className="w-6 h-6 rounded bg-emerald-500 text-slate-950 font-bold flex items-center justify-center text-xs">
+                              {hs.id}
+                            </span>
+                            <button
+                              onClick={() => setHotspots(hotspots.filter(h => h.id !== hs.id))}
+                              className="text-xs text-rose-400 hover:underline"
+                            >
+                              Hapus
+                            </button>
+                          </div>
+
+                          <div>
+                            <label className="text-[10px] text-slate-400 block font-bold">Nama Lengkap Organ</label>
+                            <input
+                              type="text"
+                              value={hs.name}
+                              onChange={(e) => {
+                                const copy = [...hotspots];
+                                copy[idx].name = e.target.value;
+                                setHotspots(copy);
+                              }}
+                              className="w-full bg-slate-950 border border-slate-700 rounded-lg px-2.5 py-1 text-xs text-white"
+                            />
+                          </div>
+
+                          <div className="grid grid-cols-3 gap-2">
+                            <div>
+                              <label className="text-[10px] text-slate-400 block font-bold">Posisi X</label>
+                              <input
+                                type="number"
+                                step="0.1"
+                                value={(hs.pos || hs.position || [0,0,0])[0]}
+                                onChange={(e) => {
+                                  const copy = [...hotspots];
+                                  const p = [...(copy[idx].pos || copy[idx].position || [0,0,0])];
+                                  p[0] = parseFloat(e.target.value) || 0;
+                                  copy[idx].pos = p;
+                                  copy[idx].position = p;
+                                  setHotspots(copy);
+                                }}
+                                className="w-full bg-slate-950 border border-slate-700 rounded-lg px-2 py-1 text-xs text-white font-mono"
+                              />
+                            </div>
+                            <div>
+                              <label className="text-[10px] text-slate-400 block font-bold">Posisi Y</label>
+                              <input
+                                type="number"
+                                step="0.1"
+                                value={(hs.pos || hs.position || [0,0,0])[1]}
+                                onChange={(e) => {
+                                  const copy = [...hotspots];
+                                  const p = [...(copy[idx].pos || copy[idx].position || [0,0,0])];
+                                  p[1] = parseFloat(e.target.value) || 0;
+                                  copy[idx].pos = p;
+                                  copy[idx].position = p;
+                                  setHotspots(copy);
+                                }}
+                                className="w-full bg-slate-950 border border-slate-700 rounded-lg px-2 py-1 text-xs text-white font-mono"
+                              />
+                            </div>
+                            <div>
+                              <label className="text-[10px] text-slate-400 block font-bold">Posisi Z</label>
+                              <input
+                                type="number"
+                                step="0.1"
+                                value={(hs.pos || hs.position || [0,0,0])[2]}
+                                onChange={(e) => {
+                                  const copy = [...hotspots];
+                                  const p = [...(copy[idx].pos || copy[idx].position || [0,0,0])];
+                                  p[2] = parseFloat(e.target.value) || 0;
+                                  copy[idx].pos = p;
+                                  copy[idx].position = p;
+                                  setHotspots(copy);
+                                }}
+                                className="w-full bg-slate-950 border border-slate-700 rounded-lg px-2 py-1 text-xs text-white font-mono"
+                              />
+                            </div>
+                          </div>
+
+                          <div>
+                            <label className="text-[10px] text-slate-400 block font-bold">Deskripsi Anatomi</label>
+                            <textarea
+                              rows={2}
+                              value={hs.desc || hs.description}
+                              onChange={(e) => {
+                                const copy = [...hotspots];
+                                copy[idx].desc = e.target.value;
+                                copy[idx].description = e.target.value;
+                                setHotspots(copy);
+                              }}
+                              className="w-full bg-slate-950 border border-slate-700 rounded-lg p-2 text-xs text-slate-200"
+                            />
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {/* TAB: Facts & Trivia */}
+                {adminTab === 'facts' && (
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div className="p-5 bg-slate-900 rounded-2xl border border-slate-800 space-y-3">
+                      <h3 className="text-sm font-bold text-white">Fakta Kunci Paru-paru</h3>
+                      <div className="space-y-2">
+                        {facts.map((f, idx) => (
+                          <div key={idx} className="flex gap-2 bg-slate-950 p-2 rounded-lg">
+                            <input
+                              type="text"
+                              value={f.label}
+                              onChange={(e) => {
+                                const copy = [...facts];
+                                copy[idx].label = e.target.value;
+                                setFacts(copy);
+                              }}
+                              className="w-1/3 bg-slate-900 border border-slate-700 rounded px-2 py-1 text-xs text-white"
+                            />
+                            <input
+                              type="text"
+                              value={f.value}
+                              onChange={(e) => {
+                                const copy = [...facts];
+                                copy[idx].value = e.target.value;
+                                setFacts(copy);
+                              }}
+                              className="flex-1 bg-slate-900 border border-slate-700 rounded px-2 py-1 text-xs text-white"
+                            />
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+
+                    <div className="p-5 bg-slate-900 rounded-2xl border border-slate-800 space-y-3">
+                      <h3 className="text-sm font-bold text-amber-400">Tahukah Kamu? (Trivia)</h3>
+                      <textarea
+                        rows={4}
+                        value={trivia}
+                        onChange={(e) => setTrivia(e.target.value)}
+                        className="w-full bg-slate-950 border border-slate-700 rounded-xl p-3 text-xs text-amber-200"
+                      />
+                    </div>
+                  </div>
+                )}
+
+                {/* TAB: Modules */}
+                {adminTab === 'modules' && (
+                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                    {modules.map((m, idx) => (
+                      <div key={m.id} className="p-4 bg-slate-900 rounded-2xl border border-slate-800 space-y-3">
+                        <div className="flex justify-between items-center">
+                          <span className="text-xs font-bold text-emerald-400">{m.num}</span>
+                          <select
+                            value={m.status}
+                            onChange={(e) => {
+                              const copy = [...modules];
+                              copy[idx].status = e.target.value;
+                              setModules(copy);
+                            }}
+                            className="bg-slate-950 border border-slate-700 rounded px-2 py-1 text-[11px] text-white"
+                          >
+                            <option value="Tersedia">Tersedia</option>
+                            <option value="Pratinjau">Pratinjau</option>
+                            <option value="Segera Hadir">Segera Hadir</option>
+                          </select>
+                        </div>
+                        <input
+                          type="text"
+                          value={m.title}
+                          onChange={(e) => {
+                            const copy = [...modules];
+                            copy[idx].title = e.target.value;
+                            setModules(copy);
+                          }}
+                          className="w-full bg-slate-950 border border-slate-700 rounded px-2.5 py-1 text-xs font-bold text-white"
+                        />
+                        <textarea
+                          rows={2}
+                          value={m.desc}
+                          onChange={(e) => {
+                            const copy = [...modules];
+                            copy[idx].desc = e.target.value;
+                            setModules(copy);
+                          }}
+                          className="w-full bg-slate-950 border border-slate-700 rounded p-2 text-xs text-slate-300"
+                        />
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            )}
+
+            {/* 4. Halaman Masuk */}
             {route === '/masuk' && (
               <div className="max-w-md mx-auto my-20 p-8 bg-slate-900 border border-slate-800 rounded-3xl space-y-6 text-center">
                 <div onClick={() => navTo('/')} className="font-extrabold text-2xl cursor-pointer">
@@ -424,6 +975,7 @@
             )}
           </main>
 
+          {/* Footer */}
           <footer className="border-t border-slate-800 py-6 px-4 bg-[#070b14] text-xs text-slate-400">
             <div className="max-w-7xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-4">
               <div>Didukung <strong className="text-slate-200">TutorFlow</strong></div>
@@ -438,6 +990,7 @@
             </div>
           </footer>
 
+          {/* Share Modal */}
           {shareOpen && (
             <div className="fixed inset-0 z-50 bg-black/80 flex items-center justify-center p-4">
               <div className="bg-slate-900 border border-slate-700 p-6 rounded-2xl max-w-sm w-full text-center space-y-4">
@@ -455,6 +1008,7 @@
             </div>
           )}
 
+          {/* Catalog Modal */}
           {catalogOpen && (
             <div className="fixed inset-0 z-50 bg-black/80 flex items-center justify-center p-4">
               <div className="bg-slate-900 border border-slate-700 p-6 rounded-2xl max-w-2xl w-full max-h-[80vh] overflow-y-auto space-y-4">
@@ -463,7 +1017,7 @@
                   <button onClick={() => setCatalogOpen(false)} className="text-slate-400 hover:text-white">✕</button>
                 </div>
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                  {ALL_MODULES.map(m => (
+                  {modules.map(m => (
                     <div key={m.id} onClick={() => { if (m.free) { navTo('/modul/sistem-pernapasan'); setCatalogOpen(false); } }} className={`p-4 rounded-xl border ${m.free ? 'bg-slate-800 border-emerald-500/50 cursor-pointer' : 'bg-slate-900 border-slate-800 opacity-60'}`}>
                       <div className="text-[10px] font-bold text-emerald-400">{m.num}</div>
                       <div className="font-bold text-white text-sm">{m.title}</div>

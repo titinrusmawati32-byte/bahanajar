@@ -4,13 +4,14 @@ export type RoutePath =
   | '/katalog' 
   | '/masuk' 
   | '/privasi' 
-  | '/syarat';
+  | '/syarat'
+  | '/admin';
 
 export interface Hotspot {
   id: number;
   name: string;
   shortName: string;
-  category: 'Paru-paru Kanan' | 'Paru-paru Kiri' | 'Saluran Napas' | 'Diafragma';
+  category: 'Paru-paru Kanan' | 'Paru-paru Kiri' | 'Saluran Napas' | 'Diafragma' | string;
   position: [number, number, number];
   description: string;
   function: string;
@@ -27,4 +28,15 @@ export interface ModuleInfo {
   description: string;
   specimen: string;
   hotspotsCount: number;
+}
+
+export interface AirwayStep {
+  step: number;
+  name: string;
+  inModule: boolean;
+}
+
+export interface KeyFact {
+  label: string;
+  value: string;
 }

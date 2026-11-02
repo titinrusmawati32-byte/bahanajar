@@ -8,6 +8,7 @@ import { ModulePage } from './pages/ModulePage';
 import { LoginPage } from './pages/LoginPage';
 import { PrivacyPage } from './pages/PrivacyPage';
 import { TermsPage } from './pages/TermsPage';
+import { AdminPage } from './pages/AdminPage';
 
 export const App: React.FC = () => {
   const [currentRoute, setCurrentRoute] = useState<RoutePath>('/');
@@ -16,7 +17,7 @@ export const App: React.FC = () => {
   useEffect(() => {
     const handleLocationChange = () => {
       const path = window.location.pathname as RoutePath;
-      if (['/', '/modul/sistem-pernapasan', '/masuk', '/privasi', '/syarat'].includes(path)) {
+      if (['/', '/modul/sistem-pernapasan', '/masuk', '/privasi', '/syarat', '/admin'].includes(path)) {
         setCurrentRoute(path);
       } else if (path === '/katalog') {
         setCurrentRoute('/');
@@ -48,6 +49,8 @@ export const App: React.FC = () => {
         );
       case '/masuk':
         return <LoginPage onNavigate={navigateTo} />;
+      case '/admin':
+        return <AdminPage onNavigate={navigateTo} />;
       case '/privasi':
         return <PrivacyPage onNavigate={navigateTo} />;
       case '/syarat':

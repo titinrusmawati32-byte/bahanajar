@@ -2,6 +2,7 @@ import React, { useEffect, useRef, useState } from 'react';
 import * as THREE from 'three';
 import { RotateCw, Maximize2, Minimize2, RotateCcw } from 'lucide-react';
 import { HOTSPOTS_DATA } from '../data/curriculum';
+import { Hotspot } from '../types';
 import { audioService } from '../utils/audio';
 
 interface LungCanvas3DProps {
@@ -9,12 +10,14 @@ interface LungCanvas3DProps {
   onSelectHotspot: (id: number) => void;
   isBreathingActive: boolean;
   onDiveToAlveolus?: () => void;
+  hotspots?: Hotspot[];
 }
 
 export const LungCanvas3D: React.FC<LungCanvas3DProps> = ({
   selectedHotspotId,
   onSelectHotspot,
   isBreathingActive,
+  hotspots,
 }) => {
   const mountRef = useRef<HTMLDivElement>(null);
   const [isRotating, setIsRotating] = useState(true);
@@ -248,7 +251,8 @@ export const LungCanvas3D: React.FC<LungCanvas3DProps> = ({
     };
 
     hotspotSpritesRef.current = [];
-    HOTSPOTS_DATA.forEach((hs) => {
+    const activeHotspots = hotspots && hotspots.length > 0 ? hotspots : HOTSPOTS_DATA;
+    activeHotspots.forEach((hs) => {
       const sprite = createHotspotSprite(hs.id);
       sprite.position.set(...hs.position);
       rootGroup.add(sprite);
@@ -336,7 +340,7 @@ export const LungCanvas3D: React.FC<LungCanvas3DProps> = ({
         container.removeChild(renderer.domElement);
       }
     };
-  }, [isRotating, isBreathingActive, selectedHotspotId]);
+  }, [isRotating, isBreathingActive, selectedHotspotId, hotspots]);
 
   const handleClick = (e: React.MouseEvent<HTMLDivElement>) => {
     const container = mountRef.current;

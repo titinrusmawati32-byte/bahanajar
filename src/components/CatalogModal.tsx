@@ -1,6 +1,6 @@
-import React from 'react';
+import React, { useMemo } from 'react';
 import { X, BookOpen, CheckCircle, Clock } from 'lucide-react';
-import { ALL_MODULES } from '../data/curriculum';
+import { getStoredModules } from '../data/curriculum';
 import { audioService } from '../utils/audio';
 
 interface CatalogModalProps {
@@ -11,6 +11,7 @@ interface CatalogModalProps {
 
 export const CatalogModal: React.FC<CatalogModalProps> = ({ isOpen, onClose, onSelectModule }) => {
   if (!isOpen) return null;
+  const modules = getStoredModules();
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-md animate-in fade-in duration-200">
@@ -38,7 +39,7 @@ export const CatalogModal: React.FC<CatalogModalProps> = ({ isOpen, onClose, onS
         </div>
 
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mt-6">
-          {ALL_MODULES.map((mod) => {
+          {modules.map((mod) => {
             const isAvailable = mod.status === 'Tersedia';
 
             return (

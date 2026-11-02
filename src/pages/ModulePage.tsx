@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   ChevronLeft,
   Share2,
@@ -11,13 +11,15 @@ import {
   Info,
   HelpCircle,
   Lightbulb,
+  Sliders,
 } from 'lucide-react';
-import { RoutePath } from '../types';
+import { RoutePath, Hotspot, AirwayStep, KeyFact } from '../types';
 import {
   MODULE_01_DATA,
-  HOTSPOTS_DATA,
-  JALUR_UDARA,
-  FAKTA_KUNCI,
+  getStoredHotspots,
+  getStoredAirway,
+  getStoredFacts,
+  getStoredTrivia,
   WA_FEEDBACK_URL,
 } from '../data/curriculum';
 import { LungCanvas3D } from '../components/LungCanvas3D';
@@ -38,12 +40,28 @@ export const ModulePage: React.FC<ModulePageProps> = ({ onNavigate, onOpenCatalo
   const [isShareModalOpen, setIsShareModalOpen] = useState<boolean>(false);
   const [isPresentationMode, setIsPresentationMode] = useState<boolean>(false);
 
-  const activeHotspot = HOTSPOTS_DATA.find((h) => h.id === selectedHotspotId);
+  // Dynamic content loaded from localStorage / defaults
+  const [hotspots, setHotspots] = useState<Hotspot[]>(getStoredHotspots());
+  const [airway, setAirway] = useState<AirwayStep[]>(getStoredAirway());
+  const [facts, setFacts] = useState<KeyFact[]>(getStoredFacts());
+  const [trivia, setTrivia] = useState<string>(getStoredTrivia());
+
+  // Reload data on mount or when returning from Admin
+  useEffect(() => {
+    setHotspots(getStoredHotspots());
+    setAirway(getStoredAirway());
+    setFacts(getStoredFacts());
+    setTrivia(getStoredTrivia());
+  }, []);
+
+  const activeHotspot = hotspots.find((h) => h.id === selectedHotspotId) || hotspots[0];
 
   return (
     <div className="flex flex-col min-h-screen bg-[#070b14] text-slate-100 selection:bg-emerald-500">
+      {/* Module Top Navigation Bar */}
       <header className="border-b border-slate-800/80 bg-[#0b0f19] px-4 py-2.5">
         <div className="max-w-[1700px] mx-auto flex flex-wrap items-center justify-between gap-3">
+          {/* Left: Back to catalog & Module title */}
           <div className="flex items-center gap-3">
             <button
               onClick={() => {
@@ -68,7 +86,7 @@ export const ModulePage: React.FC<ModulePageProps> = ({ onNavigate, onOpenCatalo
 
             <div className="hidden sm:flex items-center gap-2 pl-2 border-l border-slate-700">
               <span className="px-2 py-0.5 rounded text-[10px] font-semibold bg-amber-500/10 text-amber-300 border border-amber-500/30">
-                Pratinjau · materi sedang diverifikasi
+                Pratinjau · materi terverifikasi
               </span>
               <span className="text-xs text-slate-400">
                 Belajar sains lewat 3D · didukung <span className="text-slate-200 font-medium">TutorFlow</span>
@@ -76,6 +94,7 @@ export const ModulePage: React.FC<ModulePageProps> = ({ onNavigate, onOpenCatalo
             </div>
           </div>
 
+          {/* Center Breadcrumbs */}
           <div className="hidden lg:flex items-center gap-2 text-xs text-slate-400 bg-slate-900/60 px-3 py-1 rounded-full border border-slate-800">
             <span>1. Biologi</span>
             <span>›</span>
@@ -84,7 +103,22 @@ export const ModulePage: React.FC<ModulePageProps> = ({ onNavigate, onOpenCatalo
             <span className="text-emerald-400 font-medium">3. Paru-paru</span>
           </div>
 
+          {/* Right Action Tools */}
           <div className="flex items-center gap-2">
+            {/* Quick Admin Access Button */}
+            <button
+              onClick={() => {
+                audioService.playClick();
+                onNavigate('/admin');
+              }}
+              className="px-3 py-1.5 rounded-lg text-xs font-semibold bg-emerald-500/15 hover:bg-emerald-500/25 text-emerald-300 border border-emerald-500/30 flex items-center gap-1.5 transition-colors"
+              title="Edit materi pembelajaran di Panel Admin"
+            >
+              <Sliders className="w-3.5 h-3.5 text-emerald-400" />
+              <span className="hidden md:inline">Edit Materi</span>
+            </button>
+
+            {/* Bagikan */}
             <button
               onClick={() => {
                 audioService.playClick();
@@ -98,6 +132,7 @@ export const ModulePage: React.FC<ModulePageProps> = ({ onNavigate, onOpenCatalo
               <span className="inline sm:hidden">Bagikan</span>
             </button>
 
+            {/* Masukan via WhatsApp */}
             <a
               href={WA_FEEDBACK_URL}
               target="_blank"
@@ -109,6 +144,7 @@ export const ModulePage: React.FC<ModulePageProps> = ({ onNavigate, onOpenCatalo
               <span className="hidden md:inline">Masukan</span>
             </a>
 
+            {/* Presentation Mode Toggle */}
             <button
               onClick={() => {
                 audioService.playClick();
@@ -125,6 +161,7 @@ export const ModulePage: React.FC<ModulePageProps> = ({ onNavigate, onOpenCatalo
               <span className="hidden xl:inline">Mode Presentasi</span>
             </button>
 
+            {/* Masuk */}
             <button
               onClick={() => {
                 audioService.playClick();
@@ -143,13 +180,16 @@ export const ModulePage: React.FC<ModulePageProps> = ({ onNavigate, onOpenCatalo
         </div>
       </header>
 
+      {/* Main Workspace Layout (Sidebar + 3D Viewport + Details Drawer) */}
       <div className="flex-1 max-w-[1800px] w-full mx-auto flex flex-col xl:flex-row overflow-hidden relative">
+        {/* Left Column: Module Index & Learning Points */}
         <aside
           className={`w-full xl:w-80 bg-[#0b0f19] border-r border-slate-800 p-5 flex flex-col justify-between shrink-0 overflow-y-auto ${
             isPresentationMode ? 'hidden' : 'block'
           }`}
         >
           <div className="space-y-6">
+            {/* Module Header */}
             <div>
               <div className="flex items-center gap-2 mb-1">
                 <span className="text-[11px] font-extrabold tracking-wider text-emerald-400 uppercase">
@@ -162,14 +202,15 @@ export const ModulePage: React.FC<ModulePageProps> = ({ onNavigate, onOpenCatalo
               <p className="text-xs text-slate-400 mt-1">{MODULE_01_DATA.category}</p>
             </div>
 
+            {/* Bagian Organ */}
             <div>
               <div className="flex items-center justify-between text-xs font-bold text-slate-400 uppercase tracking-wider mb-2.5">
                 <span>BAGIAN</span>
-                <span className="text-emerald-400 lowercase font-normal">{MODULE_01_DATA.hotspotsCount} titik belajar</span>
+                <span className="text-emerald-400 lowercase font-normal">{hotspots.length} titik belajar</span>
               </div>
 
               <div className="space-y-1.5">
-                {HOTSPOTS_DATA.map((hs) => {
+                {hotspots.map((hs) => {
                   const isSelected = selectedHotspotId === hs.id && !isDivingToAlveolus;
 
                   return (
@@ -202,12 +243,14 @@ export const ModulePage: React.FC<ModulePageProps> = ({ onNavigate, onOpenCatalo
               </div>
             </div>
 
+            {/* Aktivitas Belajar */}
             <div>
               <div className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-2.5">
                 AKTIVITAS
               </div>
 
               <div className="space-y-2">
+                {/* Animasi Napas */}
                 <button
                   onClick={() => {
                     audioService.playClick();
@@ -234,6 +277,7 @@ export const ModulePage: React.FC<ModulePageProps> = ({ onNavigate, onOpenCatalo
                   </span>
                 </button>
 
+                {/* Menyelam ke Alveolus */}
                 <button
                   onClick={() => {
                     audioService.playClick();
@@ -262,12 +306,14 @@ export const ModulePage: React.FC<ModulePageProps> = ({ onNavigate, onOpenCatalo
             </div>
           </div>
 
+          {/* Verified tag at bottom of sidebar */}
           <div className="mt-8 pt-4 border-t border-slate-800/80 text-[11px] text-slate-400 flex items-center gap-2">
             <Info className="w-3.5 h-3.5 text-emerald-400 shrink-0" />
             <span>Materi sesuai Kurikulum Merdeka SMP Kelas 8 Bab Struktur & Fungsi Tubuh.</span>
           </div>
         </aside>
 
+        {/* Central 3D Canvas Area */}
         <main className="flex-1 relative flex flex-col justify-between overflow-hidden bg-[#070b14]">
           {isDivingToAlveolus ? (
             <AlveolusCanvas3D onBackToLungs={() => setIsDivingToAlveolus(false)} />
@@ -277,13 +323,15 @@ export const ModulePage: React.FC<ModulePageProps> = ({ onNavigate, onOpenCatalo
               onSelectHotspot={(id) => setSelectedHotspotId(id)}
               isBreathingActive={isBreathingActive}
               onDiveToAlveolus={() => setIsDivingToAlveolus(true)}
+              hotspots={hotspots}
             />
           )}
 
+          {/* Quick Jump Hotspot Pills at bottom of 3D Canvas */}
           {!isDivingToAlveolus && (
             <div className="absolute bottom-12 left-0 right-0 z-20 flex justify-center px-4 pointer-events-none">
               <div className="bg-slate-900/90 backdrop-blur-md p-1.5 rounded-2xl border border-slate-700/80 shadow-2xl flex flex-wrap items-center justify-center gap-1.5 pointer-events-auto max-w-full overflow-x-auto">
-                {HOTSPOTS_DATA.map((hs) => {
+                {hotspots.map((hs) => {
                   const isSelected = selectedHotspotId === hs.id;
                   return (
                     <button
@@ -335,6 +383,7 @@ export const ModulePage: React.FC<ModulePageProps> = ({ onNavigate, onOpenCatalo
             </div>
           )}
 
+          {/* Presentation Mode Fullscreen Subtitle Overlay */}
           <PresentationOverlay
             isActive={isPresentationMode}
             onExit={() => setIsPresentationMode(false)}
@@ -343,11 +392,13 @@ export const ModulePage: React.FC<ModulePageProps> = ({ onNavigate, onOpenCatalo
           />
         </main>
 
+        {/* Right Column: Organ Facts, Airway, and Educational Context */}
         <aside
           className={`w-full xl:w-96 bg-[#0b0f19] border-l border-slate-800 p-6 overflow-y-auto space-y-6 ${
             isPresentationMode ? 'hidden' : 'block'
           }`}
         >
+          {/* Active Organ / Hotspot Information Card */}
           <div className="bg-slate-900/90 rounded-2xl p-5 border border-slate-800 shadow-xl space-y-3">
             <div className="text-[10px] font-bold uppercase tracking-wider text-emerald-400">
               ORGAN · SISTEM PERNAPASAN
@@ -358,6 +409,7 @@ export const ModulePage: React.FC<ModulePageProps> = ({ onNavigate, onOpenCatalo
               Organ utama pernapasan. Tugasnya memasukkan oksigen ke darah dan membuang karbon dioksida.
             </p>
 
+            {/* If a hotspot is clicked, show its specific anatomical breakdown */}
             {activeHotspot && (
               <div className="pt-3 border-t border-slate-800 space-y-1.5 animate-in fade-in duration-150">
                 <div className="text-xs font-bold text-white flex items-center gap-1.5">
@@ -372,13 +424,14 @@ export const ModulePage: React.FC<ModulePageProps> = ({ onNavigate, onOpenCatalo
             )}
           </div>
 
+          {/* Key Facts (Fakta Kunci) */}
           <div className="space-y-3">
             <h3 className="text-xs font-bold text-slate-400 uppercase tracking-wider flex items-center gap-1.5">
               <Info className="w-3.5 h-3.5 text-emerald-400" />
               FAKTA KUNCI
             </h3>
             <div className="grid grid-cols-2 gap-2.5">
-              {FAKTA_KUNCI.map((fact, idx) => (
+              {facts.map((fact, idx) => (
                 <div key={idx} className="p-3 rounded-xl bg-slate-900/80 border border-slate-800/80">
                   <div className="text-[11px] text-slate-400">{fact.label}</div>
                   <div className="text-xs font-bold text-white mt-1">{fact.value}</div>
@@ -387,13 +440,14 @@ export const ModulePage: React.FC<ModulePageProps> = ({ onNavigate, onOpenCatalo
             </div>
           </div>
 
+          {/* Jalur Udara (Airway Steps) */}
           <div className="space-y-3">
             <h3 className="text-xs font-bold text-slate-400 uppercase tracking-wider flex items-center gap-1.5">
               <Layers className="w-3.5 h-3.5 text-cyan-400" />
               JALUR UDARA
             </h3>
             <div className="space-y-1.5">
-              {JALUR_UDARA.map((item) => (
+              {airway.map((item) => (
                 <div
                   key={item.step}
                   className={`px-3 py-2 rounded-xl text-xs flex items-center justify-between border ${
@@ -418,16 +472,18 @@ export const ModulePage: React.FC<ModulePageProps> = ({ onNavigate, onOpenCatalo
             </div>
           </div>
 
+          {/* Did You Know? (Tahukah kamu?) */}
           <div className="p-4 rounded-2xl bg-gradient-to-br from-amber-500/10 to-orange-500/5 border border-amber-500/20 space-y-2">
             <div className="flex items-center gap-2 text-xs font-bold text-amber-400">
               <Lightbulb className="w-4 h-4" />
               <span>Tahukah kamu?</span>
             </div>
             <p className="text-xs text-amber-200/90 leading-relaxed">
-              Kalau seluruh dinding alveolus dibentangkan, luasnya sekitar <strong>70 m²</strong> — kira-kira seluas lantai ruang kelasmu!
+              {trivia}
             </p>
           </div>
 
+          {/* Curriculum & Quiz status */}
           <div className="p-3.5 rounded-xl bg-slate-900 border border-slate-800 flex items-center justify-between text-xs">
             <div className="flex items-center gap-2 text-slate-300">
               <HelpCircle className="w-4 h-4 text-emerald-400" />
@@ -440,6 +496,7 @@ export const ModulePage: React.FC<ModulePageProps> = ({ onNavigate, onOpenCatalo
         </aside>
       </div>
 
+      {/* Share Modal Dialog */}
       <ShareModal
         isOpen={isShareModalOpen}
         onClose={() => setIsShareModalOpen(false)}

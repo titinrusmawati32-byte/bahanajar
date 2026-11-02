@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { Sparkles, ArrowRight, RotateCw, Layers, ZoomIn, QrCode, CheckCircle, Clock } from 'lucide-react';
 import { RoutePath } from '../types';
-import { ALL_MODULES } from '../data/curriculum';
+import { getStoredModules } from '../data/curriculum';
 import { LungCanvas3D } from '../components/LungCanvas3D';
 import { audioService } from '../utils/audio';
 
@@ -178,7 +178,7 @@ export const HomePage: React.FC<HomePageProps> = ({ onNavigate }) => {
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {ALL_MODULES.map((mod) => {
+            {getStoredModules().map((mod) => {
               const isAvailable = mod.status === 'Tersedia';
 
               return (
