@@ -1,4 +1,4 @@
-import React, { useMemo } from 'react';
+import React from 'react';
 import { X, BookOpen, CheckCircle, Clock } from 'lucide-react';
 import { getStoredModules } from '../data/curriculum';
 import { audioService } from '../utils/audio';
